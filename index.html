@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111318">
+<title>커뮤니티 종목 토픽</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+<style>
+  :root {
+    --bg: #f5f6f8; --card: #ffffff; --text: #16181d; --muted: #6b7280; --line: #e5e7eb;
+    --accent: #2563eb; --up: #dc2626; --new: #7c3aed; --re: #059669; --chip: #eef2ff; --chip-text: #3730a3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0f1115; --card: #181b22; --text: #e7e9ee; --muted: #9aa3b2; --line: #262a33;
+            --accent: #60a5fa; --up: #f87171; --new: #a78bfa; --re: #34d399; --chip: #1e2340; --chip-text: #c7d2fe; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; padding-bottom: 72px; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 12px 14px 8px; border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 17px; margin: 0 0 2px; }
+  header .meta { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  header .meta button { background: none; border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: 4px 10px; font-size: 12px; }
+  .search { margin-top: 8px; display: flex; gap: 6px; }
+  .search input { flex: 1; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--text); font-size: 14px; }
+  nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; background: var(--card); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); z-index: 5; }
+  nav button { flex: 1; padding: 10px 0 8px; background: none; border: 0; color: var(--muted); font-size: 12px; }
+  nav button.on { color: var(--accent); font-weight: 700; }
+  nav button span { display: block; font-size: 18px; }
+  main { padding: 10px 12px; }
+  section { display: none; } section.on { display: block; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+  .mood { font-size: 14px; }
+  .mood small { color: var(--muted); display: block; margin-top: 2px; }
+  .topic { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; align-items: center; }
+  .topic .sym { font-weight: 700; font-size: 16px; }
+  .topic .n { font-size: 13px; color: var(--muted); }
+  .topic .ex { grid-column: 1 / -1; font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 6px; border-radius: 6px; margin-left: 6px; color: #fff; vertical-align: middle; }
+  .badge.up { background: var(--up); } .badge.new { background: var(--new); } .badge.re { background: var(--re); }
+  svg.spark { width: 84px; height: 28px; }
+  .post { display: block; color: inherit; text-decoration: none; }
+  .post .t { font-weight: 600; font-size: 15px; }
+  .post .s { font-size: 13px; color: var(--muted); margin-top: 3px; }
+  .post .m { font-size: 12px; color: var(--muted); margin-top: 5px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .chip { background: var(--chip); color: var(--chip-text); padding: 1px 7px; border-radius: 999px; font-size: 11px; }
+  .board { border: 1px solid var(--line); padding: 1px 7px; border-radius: 999px; font-size: 11px; }
+  .subtabs { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 8px; }
+  .subtabs button { white-space: nowrap; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 999px; padding: 5px 12px; font-size: 13px; }
+  .subtabs button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  h2 { font-size: 14px; color: var(--muted); margin: 14px 2px 6px; font-weight: 600; }
+  .empty { color: var(--muted); font-size: 14px; padding: 20px; text-align: center; }
+  .fail { font-size: 12px; color: var(--up); }
+</style>
+</head>
+<body>
+<header>
+  <h1>📊 커뮤니티 종목 토픽</h1>
+  <div class="meta"><span id="gen">불러오는 중…</span><button id="reload">새로고침</button></div>
+  <div class="search"><input id="q" type="search" placeholder="종목/키워드 검색 (예: NVDA, 환율, 하이닉스)"></div>
+</header>
+<main>
+  <section id="tab-topics" class="on"></section>
+  <section id="tab-cafe"></section>
+  <section id="tab-dc"></section>
+  <section id="tab-reddit"></section>
+</main>
+<nav>
+  <button data-tab="topics" class="on"><span>🔥</span>토픽</button>
+  <button data-tab="cafe"><span>☕</span>미주미</button>
+  <button data-tab="dc"><span>💬</span>디시</button>
+  <button data-tab="reddit"><span>🌐</span>레딧</button>
+</nav>
+<script>
+(function () {
+  const $ = (s, el) => (el || document).querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  let data = null, cafeView = "top", query = "";
+  try { cafeView = localStorage.getItem("cafeView") || "top"; } catch (e) {}
+
+  function ago(iso) {
+    const d = (Date.now() - new Date(iso).getTime()) / 60000;
+    if (d < 1) return "방금"; if (d < 60) return Math.round(d) + "분 전";
+    if (d < 1440) return Math.round(d / 60) + "시간 전"; return Math.round(d / 1440) + "일 전";
+  }
+  function spark(series) {
+    if (!series || series.length < 2) return "";
+    const max = Math.max(...series, 1), w = 84, h = 28, n = series.length;
+    const pts = series.map((v, i) => `${(i / (n - 1) * (w - 2) + 1).toFixed(1)},${(h - 2 - v / max * (h - 4)).toFixed(1)}`);
+    const last = pts[pts.length - 1].split(",");
+    return `<svg class="spark" viewBox="0 0 ${w} ${h}"><polyline fill="none" stroke="currentColor" stroke-width="1.5" opacity=".6" points="${pts.join(" ")}"/><circle cx="${last[0]}" cy="${last[1]}" r="2.5" fill="var(--accent)"/></svg>`;
+  }
+  function flagBadge(f) {
+    if (!f) return ""; const cls = f.includes("급증") ? "up" : f.includes("신규") ? "new" : "re";
+    return `<span class="badge ${cls}">${esc(f)}</span>`;
+  }
+  function matches(text) { return !query || (text || "").toLowerCase().includes(query); }
+  function post(p, kind) {
+    const text = [p.title, p.snippet, (p.tags || []).join(" "), p.board].join(" ");
+    if (!matches(text)) return "";
+    const stat = kind === "nc" ? `👍 ${p.rec} · 👁 ${p.views} · 💬 ${p.comments ?? 0}`
+               : kind === "reddit" ? `hot #${31 - p.rec}` : `추천 ${p.rec} · 조회 ${p.views}`;
+    const when = p.ts ? new Date(p.ts * 1000).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
+    return `<a class="card post" href="${esc(p.url)}" target="_blank" rel="noopener">
+      <div class="t">${esc(p.title)}</div>
+      ${p.snippet ? `<div class="s">${esc(p.snippet)}</div>` : ""}
+      <div class="m"><span>${stat}</span>${p.board ? `<span class="board">${esc(p.board)}</span>` : ""}${when ? `<span>${when}</span>` : ""}${p.writer ? `<span>${esc(p.writer)}</span>` : ""}
+      ${(p.tags || []).map(t => `<span class="chip">${esc(t)}</span>`).join("")}</div></a>`;
+  }
+  function list(arr, kind) { const h = (arr || []).map(p => post(p, kind)).join(""); return h || `<div class="empty">표시할 글이 없습니다</div>`; }
+
+  function renderTopics() {
+    const t = data.topics.filter(x => matches(x.sym + " " + x.example));
+    const hint = data.history_runs < 4 ? `<small>비교 이력 쌓는 중 (${data.history_runs}/4회). 급증·재부상 판정은 그 뒤부터</small>` : "";
+    $("#tab-topics").innerHTML = `
+      <div class="card mood">${esc(data.mood)}<small>주식 글 ${data.total}건 분석 · 이력 ${data.history_runs}회</small>${hint}</div>
+      ${t.map(x => `<div class="card topic">
+        <div><span class="sym">${esc(x.sym)}</span>${flagBadge(x.flag)}<div class="n">${x.n}회 · 지금 ${x.rate.toFixed(0)}%${x.base != null ? ` · 평소 ${x.base.toFixed(0)}%` : ""}</div></div>
+        <div>${spark(x.series)}</div>
+        <div class="ex">└ ${esc(x.example)}</div></div>`).join("") || `<div class="empty">검색 결과 없음</div>`}
+      ${data.reddit_topics.length ? `<h2>레딧 토픽</h2><div class="card">${data.reddit_topics.map(r => `<span class="chip">${esc(r.sym)} ${r.n}</span> `).join("")}</div>` : ""}
+      ${data.failures.length ? `<h2>수집 실패</h2><div class="card fail">${data.failures.map(f => esc(f.source + ": " + f.error)).join("<br>")}</div>` : ""}`;
+  }
+  function renderCafe() {
+    const views = { top: "좋아요 TOP", latest: "최신 전체", news: "뉴스", diary: "매매일지", kr: "국장" };
+    let arr = data.cafe[cafeView === "kr" ? "latest" : cafeView] || [];
+    if (cafeView === "kr") arr = arr.filter(p => p.board === "국장");
+    $("#tab-cafe").innerHTML = `<div class="subtabs">${Object.entries(views).map(([k, v]) =>
+      `<button data-v="${k}" class="${k === cafeView ? "on" : ""}">${v}</button>`).join("")}</div>${list(arr, "nc")}`;
+    $("#tab-cafe .subtabs").onclick = e => { const b = e.target.closest("button"); if (!b) return; cafeView = b.dataset.v;
+      try { localStorage.setItem("cafeView", cafeView); } catch (err) {} renderCafe(); };
+  }
+  function renderDc() {
+    $("#tab-dc").innerHTML = `<h2>개념글 TOP</h2>${list(data.dc.best, "dc")}<h2>최신글 화제</h2>${list(data.dc.hot, "dc")}`;
+  }
+  function renderReddit() {
+    $("#tab-reddit").innerHTML = `<h2>r/wallstreetbets</h2>${list(data.reddit.wsb, "reddit")}<h2>r/stocks</h2>${list(data.reddit.stocks, "reddit")}`;
+  }
+  function render() {
+    if (!data) return;
+    $("#gen").textContent = `업데이트 ${data.generated_at.replace("T", " ").slice(0, 16)} (${ago(data.generated_at)})`;
+    renderTopics(); renderCafe(); renderDc(); renderReddit();
+  }
+  async function load() {
+    $("#gen").textContent = "불러오는 중…";
+    try {
+      const r = await fetch("data.json?t=" + Date.now(), { cache: "no-store" });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      data = await r.json(); render();
+    } catch (e) { $("#gen").textContent = "데이터를 불러오지 못했습니다: " + e.message; }
+  }
+  document.querySelector("nav").onclick = e => {
+    const b = e.target.closest("button"); if (!b) return;
+    document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
+    document.querySelectorAll("main section").forEach(s => s.classList.toggle("on", s.id === "tab-" + b.dataset.tab));
+    window.scrollTo(0, 0);
+  };
+  $("#q").oninput = e => { query = e.target.value.trim().toLowerCase(); render(); };
+  $("#reload").onclick = load;
+  load();
+})();
+</script>
+</body>
+</html>
